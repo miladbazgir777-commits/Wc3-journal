@@ -1,0 +1,44 @@
+name: Build WC3 Journal APK
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - WC3_Journal_AndroidStudio_Source.zip
+      - .github/workflows/build-apk.yml
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate and extract Android project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s WC3_Journal_AndroidStudio_Source.zip || { echo 'The WC3_Journal_AndroidStudio_Source.zip source archive is missing. Upload it to the repository root.'; exit 1; }
+          unzip -q WC3_Journal_AndroidStudio_Source.zip -d extracted
+          test -f extracted/WC3Journal_AndroidStudio/app/build.gradle
+          cp -a extracted/WC3Journal_AndroidStudio/. project/
+          test -f project/app/src/main/assets/index.html
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Install Android SDK 35
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build installer APK
+        working-directory: project
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+      - name: Name the installer
+        run: cp project/app/build/outputs/apk/debug/app-debug.apk WC3-Journal.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WC3-Journal-Installer
+          path: WC3-Journal.apk
+          if-no-files-found: error
+          retention-days: 30
