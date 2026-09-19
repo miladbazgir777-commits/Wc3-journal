@@ -1,13 +1,15 @@
 # WC3 Journal — Android installer
 
-This repository builds an installable Android APK from the prepared WC3 Journal source archive.
+The V10 project starts with **no saved comparisons, Hero Cups, Unit Cups, or Faction Wars**. It retains JSON/older-HTML import and export, private Android app storage, and the Warcraft III icon supplied by the user.
 
-## Build
+## Build the installable APK
 
-Upload `WC3_Journal_AndroidStudio_Source.zip` to the repository root. GitHub Actions will build the Android APK automatically after the ZIP is committed, or you can run **Actions → Build WC3 Journal APK → Run workflow**.
+Upload **`WC3_Journal_V10_Android_Source.zip`** to this repository's root (do not extract it). GitHub Actions will automatically launch **Build WC3 Journal APK** after the upload is committed. When it succeeds, open the run and download the **WC3-Journal-V10-Installer** artifact; unzip that artifact and tap `WC3-Journal-V10.apk` on Android. Install with the Android system Package Installer via My Files/Downloads rather than Split APKs Installer (SAI).
 
-When the workflow finishes, open its run and download the `WC3-Journal-APK` artifact. Unzip that artifact to obtain `WC3-Journal.apk`, then open it on your Android phone and install it.
+The build downloads *exact, verified* classic hero/unit/ability PNG artwork from Warcraft Wiki or Liquipedia Commons, embeds it into the offline HTML, and fails rather than producing an APK with largely missing artwork. It also exports a separate **WC3-Journal-V10-Offline-HTML** artifact containing the artwork.
 
-The source archive has a clean starting database (no previous comparisons, Hero Cups, Unit Cups, or Faction Wars), includes the user-provided icon, and supports import/export of prior Codex backups. The app's data is kept in Android private storage. Keep JSON backups before uninstalling or clearing storage.
+V10 has a four-emblem faction theme menu, larger distinctive themed navigation icons, no quick-choice buttons or cup merge buttons, and tap-to-study icons. A hero, unit or ability icon opens its associated Liquipedia Warcraft page in the phone's browser. Pages may display balance data from patches newer than WC3 1.26.
 
-This is a debug-signed APK intended for personal sideloading. Do not distribute it as an official Blizzard product.
+Your data resides inside Android private app storage. Export JSON before uninstalling, clearing storage, or installing a version signed with a different debug key. Builds from GitHub's ephemeral debug signing keys may not install as updates over older builds: if Android reports a signature conflict, export first and then uninstall the older app.
+
+This project is a personal, unofficial companion and is not affiliated with Blizzard or Liquipedia.
