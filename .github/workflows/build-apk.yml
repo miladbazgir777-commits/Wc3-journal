@@ -3,8 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'WC3_Journal_AndroidStudio_Source.zip'
-      - '.github/workflows/build-apk.yml'
+      - 'WC3_Journal_V10_Android_Source.zip'
 permissions:
   contents: read
 jobs:
@@ -12,16 +11,20 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Validate and extract Android project
+      - name: Extract WC3 Journal V10
         shell: bash
         run: |
           set -euo pipefail
-          test -s WC3_Journal_AndroidStudio_Source.zip || { echo 'Android source archive is missing.'; exit 1; }
-          unzip -q WC3_Journal_AndroidStudio_Source.zip -d extracted
+          test -s WC3_Journal_V10_Android_Source.zip || { echo 'Upload WC3_Journal_V10_Android_Source.zip to the repository root first.'; exit 1; }
+          unzip -q WC3_Journal_V10_Android_Source.zip -d extracted
           test -f extracted/WC3Journal_AndroidStudio/app/build.gradle
           mkdir -p project
           cp -a extracted/WC3Journal_AndroidStudio/. project/
           test -s project/app/src/main/assets/index.html
+          test -s project/download_icons.py
+      - name: Bundle original Classic portraits and ability icons for offline use
+        shell: bash
+        run: python3 -u project/download_icons.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -40,14 +43,24 @@ jobs:
           test -x "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Build installer APK
+      - name: Compile Android installer
         working-directory: project
         run: gradle :app:assembleDebug --no-daemon --stacktrace
-      - name: Name the installer
-        run: cp project/app/build/outputs/apk/debug/app-debug.apk WC3-Journal.apk
+      - name: Prepare installer and portable HTML
+        shell: bash
+        run: |
+          cp project/app/build/outputs/apk/debug/app-debug.apk WC3-Journal-V10.apk
+          cp project/app/src/main/assets/index.html WC3-Journal-V10-Offline.html
+          test -s WC3-Journal-V10.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: WC3-Journal-Installer
-          path: WC3-Journal.apk
+          name: WC3-Journal-V10-Installer
+          path: WC3-Journal-V10.apk
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WC3-Journal-V10-Offline-HTML
+          path: WC3-Journal-V10-Offline.html
           if-no-files-found: error
           retention-days: 30
