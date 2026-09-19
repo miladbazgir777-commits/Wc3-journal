@@ -1,0 +1,30 @@
+name: Verify Warcraft art source
+on:
+  push:
+    paths:
+      - .github/workflows/test-artwork.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check icon source endpoints
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request
+          for base in [
+           'https://warcraft.wiki.gg/wiki/Special:Redirect/file/BTNHeroDemonHunter.png',
+           'https://warcraft.wiki.gg/images/f/f5/BTNHeroDemonHunter.png',
+           'https://liquipedia.net/commons/Special:Redirect/file/Wc3BTNHeroDemonHunter.png',
+           'https://wowpedia.fandom.com/wiki/Special:Redirect/file/BTNHeroDemonHunter.png',
+          ]:
+           try:
+            r=urllib.request.urlopen(urllib.request.Request(base,headers={'User-Agent':'Mozilla/5.0 (WC3 Journal personal icon cache)'}),timeout=12)
+            data=r.read(50000)
+            print('SOURCE',base,'HTTP',r.status,'BYTES',len(data),'TYPE',r.headers.get('Content-Type'),'MAGIC',repr(data[:8]),'DEST',r.url)
+           except Exception as e:
+            print('SOURCE',base,'ERROR',repr(e))
+          PY
