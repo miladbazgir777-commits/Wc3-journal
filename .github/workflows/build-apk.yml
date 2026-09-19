@@ -3,34 +3,43 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - WC3_Journal_AndroidStudio_Source.zip
-      - .github/workflows/build-apk.yml
+      - 'WC3_Journal_AndroidStudio_Source.zip'
+      - '.github/workflows/build-apk.yml'
 permissions:
   contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Validate and extract Android project
         shell: bash
         run: |
           set -euo pipefail
-          test -s WC3_Journal_AndroidStudio_Source.zip || { echo 'The WC3_Journal_AndroidStudio_Source.zip source archive is missing. Upload it to the repository root.'; exit 1; }
+          test -s WC3_Journal_AndroidStudio_Source.zip || { echo 'Android source archive is missing.'; exit 1; }
           unzip -q WC3_Journal_AndroidStudio_Source.zip -d extracted
           test -f extracted/WC3Journal_AndroidStudio/app/build.gradle
+          mkdir -p project
           cp -a extracted/WC3Journal_AndroidStudio/. project/
-          test -f project/app/src/main/assets/index.html
+          test -s project/app/src/main/assets/index.html
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
       - name: Install Android SDK 35
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(command -v sdkmanager)"; fi
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'platforms;android-35' 'build-tools;35.0.0'
       - name: Build installer APK
         working-directory: project
         run: gradle :app:assembleDebug --no-daemon --stacktrace
